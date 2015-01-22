@@ -29,6 +29,16 @@ public class JobResource {
         this.definitions = definitions;
     }
 
+    @POST("/posttask")
+    public JobDescriptor createTask(){
+        return  null;
+    }
+
+    @POST("/deletetask")
+    public JobDescriptor deleteTask(){
+        return  null;
+    }
+
     /*
     Example:
 

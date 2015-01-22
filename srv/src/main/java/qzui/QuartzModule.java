@@ -3,9 +3,12 @@ package qzui;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.impl.StdSchedulerFactory;
+import qzui.dmp.DMPBootstrap;
 import restx.factory.AutoStartable;
 import restx.factory.Module;
 import restx.factory.Provides;
+
+import java.io.IOException;
 
 /**
  * Date: 18/2/14
@@ -29,6 +32,9 @@ public class QuartzModule {
             public void start() {
                 try {
                     scheduler.start();
+                    DMPBootstrap.setScheduler(scheduler);
+                    DMPBootstrap.subscribeToDMPEvents();
+                    DMPBootstrap.initializeJobsFromTasks();
                 } catch (SchedulerException e) {
                     throw new RuntimeException(e);
                 }

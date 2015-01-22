@@ -1,11 +1,18 @@
 package qzui.domain;
 
 import com.github.kevinsawicki.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.*;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
 import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import restx.factory.Component;
 
+import java.io.IOException;
 import java.util.List;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -131,21 +138,27 @@ public class HttpJobDefinition extends AbstractJobDefinition {
             JobDataMap jobDataMap = context.getJobDetail().getJobDataMap();
             String url = jobDataMap.getString("url");
             String method = jobDataMap.getString("method");
-            HttpRequest request = new HttpRequest(url, method);
 
-            String body = "";
-            if (!isNullOrEmpty(jobDataMap.getString("body"))) {
-                body = jobDataMap.getString("body");
+            try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
+                HttpEntityEnclosingRequestBase request = null;
+                switch (method){
+                    case "DELETE": request = new HttpPut(url);break;
+                    case "PUT": request = new HttpPost(url);break;
+                    case "POST": request = new HttpPost(url);break;
+                    case "PATCH": request = new HttpPatch(url);break;
+                }
+                if (!isNullOrEmpty(jobDataMap.getString("body"))) {
+                    String body = jobDataMap.getString("body");
+                    StringEntity params = new StringEntity(body);
+                    request.addHeader("content-type", "application/json");
+                    request.setEntity(params);
+                }
+                HttpResponse result = httpClient.execute(request);
+                String json = EntityUtils.toString(result.getEntity(), "UTF-8");
+                logger.info("{} {} => {}\n{}", method, url, result.getStatusLine(), json);
+
+            } catch (IOException ex) {
             }
-
-            setContentType(jobDataMap, request);
-            setCrendentials(jobDataMap, request);
-
-            request.send(body);
-            int code = request.code();
-            String responseBody = request.body();
-
-            logger.info("{} {} => {}\n{}", method, url, code, responseBody);
         }
 
         private void setCrendentials(JobDataMap jobDataMap, HttpRequest request) {
