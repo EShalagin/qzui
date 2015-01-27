@@ -3,6 +3,9 @@ package qzui.rest;
 import com.google.common.base.Optional;
 import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import qzui.dmp.*;
 import qzui.domain.JobDefinition;
 import qzui.domain.JobDescriptor;
 import restx.annotations.DELETE;
@@ -10,8 +13,10 @@ import restx.annotations.GET;
 import restx.annotations.POST;
 import restx.annotations.RestxResource;
 import restx.factory.Component;
+import restx.security.PermitAll;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -21,6 +26,7 @@ import java.util.Set;
 @RestxResource
 @Component
 public class JobResource {
+    private static final Logger logger = LoggerFactory.getLogger(JobResource.class);
     private final Scheduler scheduler;
     private final Collection<JobDefinition> definitions;
 
@@ -29,14 +35,43 @@ public class JobResource {
         this.definitions = definitions;
     }
 
-    @POST("/posttask")
-    public JobDescriptor createTask(){
-        return  null;
+    @PermitAll
+    @POST("/createtask")
+    public List<JobDescriptor> createTask(CallbackResponseCreateTask response) {
+        logger.debug("call createTask");
+        return DMPBootstrap.addNewJob(scheduler, response.getTask());
     }
 
-    @POST("/deletetask")
-    public JobDescriptor deleteTask(){
+    @PermitAll
+    @POST("/bulkcreatetask")
+    public List<JobDescriptor> bulkCreateTask(CallbackResponseBulkCreateTask response) {
+        logger.debug("call bulkCreateTask");
         return  null;
+        //return DMPBootstrap.addNewJob(scheduler, response.getTasks());
+    }
+
+    @PermitAll
+    @POST("/updatetask")
+    public List<JobDescriptor> updateTask(CallbackResponseUpdateTask response) {
+        logger.debug("call updateTask");
+        DMPBootstrap.deleteJob(scheduler, response.getTask());
+        return DMPBootstrap.addNewJob(scheduler, response.getTask());
+    }
+
+    @PermitAll
+    @POST("/bulkupdatetask")
+    public List<JobDescriptor> bulkUpdateTask(CallbackResponseBulkUpdateTask response) {
+        logger.debug("call bulkUpdateTask");
+        return  null;
+        //return DMPBootstrap.addNewJob(scheduler, response.getTasks());
+    }
+
+    @PermitAll
+    @POST("/deletetask")
+    public Boolean deleteTask(CallbackResponseDeleteTask response) {
+        logger.debug("call deleteTask");
+        DMPBootstrap.deleteJob(scheduler, response.getTask());
+        return true;
     }
 
     /*
@@ -46,6 +81,7 @@ public class JobResource {
 
         {"type":"http", "name":"google-humans", "method":"GET", "url":"http://www.google.com/humans.txt", "triggers": [{"when":"now"}]}
      */
+    @PermitAll
     @POST("/groups/{group}/jobs")
     public JobDescriptor addJob(String group, JobDescriptor jobDescriptor) {
         try {
@@ -63,8 +99,9 @@ public class JobResource {
         }
     }
 
+    @PermitAll
     @GET("/jobs")
-    public Set<JobKey> getJobKeys()  {
+    public Set<JobKey> getJobKeys() {
         try {
             return scheduler.getJobKeys(GroupMatcher.anyJobGroup());
         } catch (SchedulerException e) {
@@ -72,8 +109,9 @@ public class JobResource {
         }
     }
 
+    @PermitAll
     @GET("/groups/{group}/jobs")
-    public Set<JobKey> getJobKeysByGroup(String group)  {
+    public Set<JobKey> getJobKeysByGroup(String group) {
         try {
             return scheduler.getJobKeys(GroupMatcher.jobGroupEquals(group));
         } catch (SchedulerException e) {
@@ -81,6 +119,7 @@ public class JobResource {
         }
     }
 
+    @PermitAll
     @GET("/groups/{group}/jobs/{name}")
     public Optional<JobDescriptor> getJob(String group, String name) {
         try {
@@ -104,6 +143,7 @@ public class JobResource {
         }
     }
 
+    @PermitAll
     @DELETE("/groups/{group}/jobs/{name}")
     public void deleteJob(String group, String name) {
         try {

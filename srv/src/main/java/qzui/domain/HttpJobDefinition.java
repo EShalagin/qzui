@@ -149,6 +149,7 @@ public class HttpJobDefinition extends AbstractJobDefinition {
                 }
                 if (!isNullOrEmpty(jobDataMap.getString("body"))) {
                     String body = jobDataMap.getString("body");
+                    logger.info("Send request {} {} => {}\n{}", method, url, body);
                     StringEntity params = new StringEntity(body);
                     request.addHeader("content-type", "application/json");
                     request.setEntity(params);

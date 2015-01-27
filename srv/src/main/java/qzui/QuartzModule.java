@@ -32,9 +32,8 @@ public class QuartzModule {
             public void start() {
                 try {
                     scheduler.start();
-                    DMPBootstrap.setScheduler(scheduler);
+                    DMPBootstrap.initializeJobsFromTasks(scheduler);
                     DMPBootstrap.subscribeToDMPEvents();
-                    DMPBootstrap.initializeJobsFromTasks();
                 } catch (SchedulerException e) {
                     throw new RuntimeException(e);
                 }
